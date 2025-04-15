@@ -1,2 +1,2 @@
-# sistema-bancario-python
-sistema bancario em python
+# SISTEMA BANCÁRIO FEITO EM PYTHON
+fizemos durante as aulas
