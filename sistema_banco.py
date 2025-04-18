@@ -1,112 +1,136 @@
-# print("**********Menu**********")
-# print("Criar Usuário")
-# print("Depositar")
-# print("Sacar")
-
 from datetime import datetime
 
-# Variáveis principais do sistema bancário
+# Variáveis iniciais
 saldo = 0
 limite = 500
 numero_saques = 0
-limites_saques = 3
-usuarios = []  # Lista para armazenar os usuários
+LIMITE_SAQUES = 3
+usuarios = []
 contas = []
-agencia = '0001'
+AGENCIA = '0001'
+extrato_operacoes = []
 
-# Função que exibe o menu principal
+# Menu com as opções
 def menu():
     print('''
-    ================== MENU ==================
-    [1] Criar Usuário
-    [2] Criar Conta
-    [3] Listar Contas
-    [d] Depositar
-    [s] Sacar
-    [e] Extrato
-    [q] Sair
-    ==========================================
+        **********Menu**********
+        (1) Criar Usuário
+        (2) Criar Conta
+        (3) Listar Contas
+        (d) Depositar
+        (s) Sacar
+        (e) Extrato
+        (q) Sair
     ''')
-    return input('Selecione uma opção: ')
+    return input('Escolha uma opção: ')
 
-# Função para realizar depósitos
+# Função de depósito
 def deposito(valor, saldo):
     if valor > 0:
         saldo += valor
-        print(f'Depósito de R${valor:.2f} realizado com sucesso.')
+        extrato_operacoes.append(f"{datetime.now().strftime('%d/%m/%Y %H:%M')} - Depósito: R${valor:.2f}")
+        print(f'Você depositou R${valor:.2f}')
     else:
-        print('Valor inválido. Por favor, insira uma quantia positiva.')
+        print('Valor do depósito inválido.')
     return saldo
 
-# Função para realizar saques
+# Função de saque
 def saque(valor, saldo):
-    global numero_saques, limite, limites_saques
+    global numero_saques
 
-    if numero_saques >= limites_saques:
-        print('Limite diário de saques atingido. Tente novamente no próximo dia útil.')
+    if numero_saques >= LIMITE_SAQUES:
+        print('Limite diário de saques atingido.')
     elif valor <= 0:
-        print('Valor de saque inválido. Por favor, insira um valor positivo.')
+        print('Valor inválido para saque.')
     elif valor > limite:
-        print(f'Valor excede o limite por saque (R${limite:.2f}).')
+        print('Valor excede o limite de R$500 por saque.')
     elif valor > saldo:
-        print('Saldo insuficiente para esta operação.')
+        print('Saldo insuficiente.')
     else:
         saldo -= valor
         numero_saques += 1
+        extrato_operacoes.append(f"{datetime.now().strftime('%d/%m/%Y %H:%M')} - Saque: R${valor:.2f}")
         print(f'Saque de R${valor:.2f} realizado com sucesso.')
+
     return saldo
 
-# Função para exibir o extrato
+# Função de extrato
 def extrato(saldo):
-    hora = datetime.now()
-    hora_formatada = hora.strftime('%d/%m/%Y - %H:%M')
-    print('\n============ EXTRATO ============')
-    print(f'Data/Hora: {hora_formatada}')
+    print('============= Extrato =============')
+    if not extrato_operacoes:
+        print('Nenhuma operação realizada.')
+    else:
+        for operacao in extrato_operacoes:
+            print(operacao)
     print(f'Saldo atual: R${saldo:.2f}')
-    print('=================================\n')
+    print('===================================')
 
-# Função para encerrar o sistema
+# Função para sair
 def sair():
-    print('\nEncerrando o sistema bancário. Até a próxima!')
+    print('*************** Encerrando o Sistema ***************')
 
-# Função para criar um novo usuário
-def novo_usuario(usuarios):
-    cpf = int(input('Digite seu CPF (somente números): '))
-    usuario = filtrar_usuario(cpf, usuarios)
+# Função para criar novo usuário
+def novo_usuario():
+    cpf = input('Digite seu CPF (somente números): ')
+    usuario = filtrar_usuario(cpf)
 
     if usuario:
-        print('Usuário já cadastrado em nossa base de dados.')
+        print('Usuário já cadastrado!')
         return
 
     nome = input('Digite seu nome completo: ')
-    data_nascimento = input('Informe sua data de nascimento (dd-mm-aaaa): ')
-    endereco = input('Informe seu endereço completo (Rua, número, CEP, bairro, cidade): ')
+    data_nascimento = input('Informe a data de nascimento (dd/mm/aaaa): ')
+    endereco = input('Informe seu endereço (Rua, número - Bairro - Cidade/Estado): ')
 
     usuarios.append({
         'nome': nome,
-        'cpf': cpf,
         'data_nascimento': data_nascimento,
+        'cpf': cpf,
         'endereco': endereco
     })
+    print('Usuário cadastrado com sucesso!')
 
-    print('Cadastro realizado com sucesso!')
-
-# Função para localizar usuário pelo CPF
-def filtrar_usuario(cpf, usuarios):
+# Função para filtrar usuário pelo CPF
+def filtrar_usuario(cpf):
     usuarios_filtrados = [usuario for usuario in usuarios if usuario['cpf'] == cpf]
     return usuarios_filtrados[0] if usuarios_filtrados else None
 
-# Loop principal do sistema
+# Função para criar conta
+def criar_conta():
+    cpf = input('Informe o CPF do usuário: ')
+    usuario = filtrar_usuario(cpf)
+
+    if usuario:
+        numero_conta = len(contas) + 1
+        contas.append({'agencia': AGENCIA, 'numero_conta': numero_conta, 'usuario': usuario})
+        print(f'Conta criada com sucesso! Agência: {AGENCIA} Conta: {numero_conta}')
+    else:
+        print('Usuário não encontrado!')
+
+# Função para listar contas
+def listar_contas():
+    for conta in contas:
+        print(f'''
+        Agência: {conta["agencia"]}
+        Conta: {conta["numero_conta"]}
+        Titular: {conta["usuario"]["nome"]}
+        ''')
+
+# Loop principal
 while True:
     opcao = menu()
 
     if opcao == '1':
-        novo_usuario(usuarios)
+        novo_usuario()
+    elif opcao == '2':
+        criar_conta()
+    elif opcao == '3':
+        listar_contas()
     elif opcao == 'd':
-        valor = float(input('Informe o valor para depósito: R$'))
+        valor = float(input('Digite o valor do depósito: '))
         saldo = deposito(valor, saldo)
     elif opcao == 's':
-        valor = float(input('Informe o valor para saque: R$'))
+        valor = float(input('Digite o valor do saque: '))
         saldo = saque(valor, saldo)
     elif opcao == 'e':
         extrato(saldo)
@@ -114,4 +138,4 @@ while True:
         sair()
         break
     else:
-        print('Opção inválida. Por favor, selecione uma opção do menu.')
+        print('Opção inválida. Tente novamente.')
